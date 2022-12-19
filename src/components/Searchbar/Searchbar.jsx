@@ -9,7 +9,6 @@ import {
 } from './Searchbar.styled';
 // import { nanoid } from 'nanoid';
 // import { FormUser, LabelUser, InputUser, ButtonAdd } from './Form.styled';
-const PAGE = 1;
 class SearchBar extends Component {
   state = {
     searchName: '',
@@ -27,7 +26,7 @@ class SearchBar extends Component {
       return;
     }
 
-    this.props.onSubmit(this.state.searchName, PAGE);
+    this.props.onSubmit(this.state.searchName);
     this.setState({ searchName: '' });
   };
 

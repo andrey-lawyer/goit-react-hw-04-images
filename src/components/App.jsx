@@ -12,22 +12,23 @@ const Status = {
   PENDING: 'pending',
   RESOLVED: 'resolved',
   REJECTED: 'rejected',
-  EMPTY: 'empty_array',
+  // EMPTY: 'empty_array',
 };
 
 class App extends Component {
   state = {
     searchName: '',
     date: [],
-    error: null,
+    error: '',
     status: '',
     page: 1,
     largeImageURL: '',
     alt: '',
+    totalHits: 0,
   };
 
-  handleFormSubmit = (searchName, page) => {
-    this.setState({ searchName, page });
+  handleFormSubmit = searchName => {
+    this.setState({ searchName, page: 1, date: [] });
   };
 
   onClickLoadMore = () => {
@@ -40,63 +41,61 @@ class App extends Component {
     this.setState({ largeImageURL, alt });
   };
 
-  componentDidMount() {
-    document.addEventListener('keydown', () => this.onImageClick(''));
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('keydown', () => this.onImageClick(''));
-  }
-
   componentDidUpdate(_, prevState) {
     const prevName = prevState.searchName;
     const nextName = this.state.searchName;
     const prevPage = prevState.page;
     const nextPage = this.state.page;
     if (prevName !== nextName || prevPage !== nextPage) {
-      this.setState({ status: Status.PENDING });
+      this.setState({ status: Status.PENDING, error: '' });
       axiosSearchImages(nextName, nextPage)
         .then(promise => {
-          return promise.data.hits;
+          return { date: promise.data.hits, totalHits: promise.data.totalHits };
         })
-        .then(date => {
-          if (nextPage === 1) {
-            return this.setState({
-              date,
-              status: date.length === 0 ? Status.EMPTY : Status.RESOLVED,
+        .then(({ date, totalHits }) => {
+          if (!date.length) {
+            this.setState({
+              error:
+                'Sorry, there are no images matching your search query.Please try again.',
+              status: Status.RESOLVED,
             });
+            return;
           }
-          return this.setState(prevState => ({
+          this.setState(prevState => ({
             date: [...prevState.date, ...date],
-            status: date.length === 0 ? Status.EMPTY : Status.RESOLVED,
+            totalHits: totalHits,
+            status: Status.RESOLVED,
           }));
         })
-        .catch(error => this.setState({ error, status: Status.REJECTED }));
+        .catch(() =>
+          this.setState({
+            error: 'Something went wrong...',
+            status: Status.REJECTED,
+          })
+        );
     }
   }
   render() {
-    const { searchName, date, error, status, page, largeImageURL, alt } =
-      this.state;
-    const buttonShow = date.length !== 0 && status !== 'empty_array';
-    const pendingOne = page === 1 && status === 'pending';
-    const pendingTwo = page !== 1 && status === 'pending';
+    const {
+      searchName,
+      date,
+      error,
+      status,
+      page,
+      largeImageURL,
+      alt,
+      totalHits,
+    } = this.state;
+    console.log(this.state);
+    const buttonShow =
+      totalHits !== 0 && totalHits > date.length && error === '';
+
     return (
       <>
         <AppUser>
           <SearchBar onSubmit={this.handleFormSubmit} page={page} />
-          {pendingOne && (
-            <SpinnerUser>
-              <Spinner
-                radius={50}
-                color={'#3f51b5e'}
-                stroke={3}
-                visible={true}
-              />
-              <p>Search {searchName} ...</p>
-            </SpinnerUser>
-          )}
           <ImageGallery dateInfo={date} onImageClick={this.onImageClick} />
-          {pendingTwo && (
+          {status === 'pending' && (
             <SpinnerUser>
               <Spinner
                 radius={50}
@@ -107,15 +106,7 @@ class App extends Component {
               <p>Search {searchName} ...</p>
             </SpinnerUser>
           )}
-          {status === 'rejected' && (
-            <Message>
-              {error} Sorry, there are no images matching your search query.
-              Please try again.
-            </Message>
-          )}
-          {status === 'empty_array' && (
-            <Message>Sorry, there are no pictures for your request</Message>
-          )}
+          {(status === 'rejected' || error) && <Message>{error}</Message>}
           {buttonShow && <Button onClickLoadMore={this.onClickLoadMore} />}
         </AppUser>
         {this.state.largeImageURL && (
