@@ -18,27 +18,13 @@ const Status = {
 class App extends Component {
   state = {
     searchName: '',
-    date: [],
+    data: [],
     error: '',
     status: '',
     page: 1,
     largeImageURL: '',
     alt: '',
     totalHits: 0,
-  };
-
-  handleFormSubmit = searchName => {
-    this.setState({ searchName, page: 1, date: [] });
-  };
-
-  onClickLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-
-  onImageClick = (largeImageURL, alt) => {
-    this.setState({ largeImageURL, alt });
   };
 
   componentDidUpdate(_, prevState) {
@@ -50,10 +36,22 @@ class App extends Component {
       this.setState({ status: Status.PENDING, error: '' });
       axiosSearchImages(nextName, nextPage)
         .then(promise => {
-          return { date: promise.data.hits, totalHits: promise.data.totalHits };
+          const oldData = promise.data.hits.map(
+            ({ id, largeImageURL, tags, webformatURL }) => ({
+              id,
+              largeImageURL,
+              tags,
+              webformatURL,
+            })
+          );
+          return {
+            data: oldData,
+            totalHits: promise.data.totalHits,
+          };
         })
-        .then(({ date, totalHits }) => {
-          if (!date.length) {
+        .then(({ data, totalHits }) => {
+          // data.map(dateEl => data.id, data.L);
+          if (!data.length) {
             this.setState({
               error:
                 'Sorry, there are no images matching your search query.Please try again.',
@@ -62,7 +60,7 @@ class App extends Component {
             return;
           }
           this.setState(prevState => ({
-            date: [...prevState.date, ...date],
+            data: [...prevState.data, ...data],
             totalHits: totalHits,
             status: Status.RESOLVED,
           }));
@@ -75,10 +73,25 @@ class App extends Component {
         );
     }
   }
+
+  handleFormSubmit = searchName => {
+    this.setState({ searchName, page: 1, data: [] });
+  };
+
+  onClickLoadMore = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
+  };
+
+  onImageClick = (largeImageURL, alt) => {
+    this.setState({ largeImageURL, alt });
+  };
+
   render() {
     const {
       searchName,
-      date,
+      data,
       error,
       status,
       page,
@@ -86,15 +99,15 @@ class App extends Component {
       alt,
       totalHits,
     } = this.state;
-    console.log(this.state);
+    // console.log(data);
     const buttonShow =
-      totalHits !== 0 && totalHits > date.length && error === '';
+      totalHits !== 0 && totalHits > data.length && error === '';
 
     return (
       <>
         <AppUser>
           <SearchBar onSubmit={this.handleFormSubmit} page={page} />
-          <ImageGallery dateInfo={date} onImageClick={this.onImageClick} />
+          <ImageGallery dataInfo={data} onImageClick={this.onImageClick} />
           {status === 'pending' && (
             <SpinnerUser>
               <Spinner
