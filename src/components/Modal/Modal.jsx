@@ -4,12 +4,13 @@ import PropTypes from 'prop-types';
 // const Modal = ({ largeImageURL, alt, onImageClick }) => {
 const Modal = ({ largeImageURL, alt, onImageClick }) => {
   useEffect(() => {
+    console.log(1);
     document.addEventListener('keydown', () => onImageClick(''));
 
     return () => {
       document.removeEventListener('keydown', () => onImageClick(''));
     };
-  }, []);
+  }, [onImageClick]);
 
   const handleBackdrop = event => {
     if (event.target === event.currentTarget) {
