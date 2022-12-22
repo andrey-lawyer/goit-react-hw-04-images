@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 export const AppUser = styled.div`
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
   grid-gap: 16px;
@@ -8,9 +9,10 @@ export const AppUser = styled.div`
 `;
 
 export const SpinnerUser = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   color: #2b00ff;
 `;
 export const Message = styled.p`

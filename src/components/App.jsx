@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { axiosSearchImages } from './axiosSearchImages';
 import Spinner from 'react-spinner-material';
 import { GlobalStyle } from 'utils/GlobalStyle';
@@ -12,128 +12,102 @@ const Status = {
   PENDING: 'pending',
   RESOLVED: 'resolved',
   REJECTED: 'rejected',
-  // EMPTY: 'empty_array',
 };
 
-class App extends Component {
-  state = {
-    searchName: '',
-    data: [],
-    error: '',
-    status: '',
-    page: 1,
-    largeImageURL: '',
-    alt: '',
-    totalHits: 0,
-  };
+const App = () => {
+  const [searchName, setSearchName] = useState('');
+  const [data, setData] = useState([]);
+  const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [alt, setAlt] = useState('');
+  const [totalHits, setTotalHits] = useState(0);
 
-  componentDidUpdate(_, prevState) {
-    const prevName = prevState.searchName;
-    const nextName = this.state.searchName;
-    const prevPage = prevState.page;
-    const nextPage = this.state.page;
-    if (prevName !== nextName || prevPage !== nextPage) {
-      this.setState({ status: Status.PENDING, error: '' });
-      axiosSearchImages(nextName, nextPage)
-        .then(promise => {
-          const oldData = promise.data.hits.map(
-            ({ id, largeImageURL, tags, webformatURL }) => ({
-              id,
-              largeImageURL,
-              tags,
-              webformatURL,
-            })
-          );
-          return {
-            data: oldData,
-            totalHits: promise.data.totalHits,
-          };
-        })
-        .then(({ data, totalHits }) => {
-          // data.map(dateEl => data.id, data.L);
-          if (!data.length) {
-            this.setState({
-              error:
-                'Sorry, there are no images matching your search query.Please try again.',
-              status: Status.RESOLVED,
-            });
-            return;
-          }
-          this.setState(prevState => ({
-            data: [...prevState.data, ...data],
-            totalHits: totalHits,
-            status: Status.RESOLVED,
-          }));
-        })
-        .catch(() =>
-          this.setState({
-            error: 'Something went wrong...',
-            status: Status.REJECTED,
+  const buttonShow =
+    totalHits !== 0 &&
+    totalHits > data.length &&
+    error === '' &&
+    status === Status.RESOLVED;
+
+  useEffect(() => {
+    if (!searchName) {
+      return;
+    }
+    setStatus(Status.PENDING);
+    axiosSearchImages(searchName, page)
+      .then(promise => {
+        const oldData = promise.data.hits.map(
+          ({ id, largeImageURL, tags, webformatURL }) => ({
+            id,
+            largeImageURL,
+            tags,
+            webformatURL,
           })
         );
-    }
-  }
+        return {
+          data: oldData,
+          totalHits: promise.data.totalHits,
+        };
+      })
+      .then(({ data, totalHits }) => {
+        if (!data.length) {
+          setError(
+            'Sorry, there are no images matching your search query.Please try again.'
+          );
+          setStatus(Status.RESOLVED);
+          return;
+        }
+        setData(oldData => [...oldData, ...data]);
+        setTotalHits(totalHits);
+        setStatus(Status.RESOLVED);
+      })
+      .catch(() => {
+        setError('Something went wrong...');
+        setStatus(Status.REJECTED);
+      });
+  }, [searchName, page]);
 
-  handleFormSubmit = searchName => {
-    this.setState({ searchName, page: 1, data: [] });
+  const handleFormSubmit = searchName => {
+    setSearchName(searchName);
+    setPage(1);
+    setData([]);
   };
 
-  onClickLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const onClickLoadMore = () => {
+    setPage(oldPage => oldPage + 1);
   };
 
-  onImageClick = (largeImageURL, alt) => {
-    this.setState({ largeImageURL, alt });
+  const onImageClick = (largeImageURL, alt) => {
+    setLargeImageURL(largeImageURL);
+    setAlt(alt);
   };
 
-  render() {
-    const {
-      searchName,
-      data,
-      error,
-      status,
-      page,
-      largeImageURL,
-      alt,
-      totalHits,
-    } = this.state;
-    // console.log(data);
-    const buttonShow =
-      totalHits !== 0 && totalHits > data.length && error === '';
-
-    return (
-      <>
-        <AppUser>
-          <SearchBar onSubmit={this.handleFormSubmit} page={page} />
-          <ImageGallery dataInfo={data} onImageClick={this.onImageClick} />
-          {status === 'pending' && (
-            <SpinnerUser>
-              <Spinner
-                radius={50}
-                color={'#3f51b5e'}
-                stroke={3}
-                visible={true}
-              />
-              <p>Search {searchName} ...</p>
-            </SpinnerUser>
-          )}
-          {(status === 'rejected' || error) && <Message>{error}</Message>}
-          {buttonShow && <Button onClickLoadMore={this.onClickLoadMore} />}
-        </AppUser>
-        {this.state.largeImageURL && (
-          <Modal
-            alt={alt}
-            largeImageURL={largeImageURL}
-            onImageClick={this.onImageClick}
-          />
+  return (
+    <>
+      <AppUser>
+        <SearchBar onSubmit={handleFormSubmit} page={page} />
+        <ImageGallery dataInfo={data} onImageClick={onImageClick} />
+        {status === 'pending' && (
+          <SpinnerUser>
+            <Spinner radius={70} color={'#3f51b5e'} stroke={3} visible={true} />
+            <p>Search {searchName} ...</p>
+          </SpinnerUser>
         )}
+        {(status === 'rejected' || error) && <Message>{error}</Message>}
+        {buttonShow && <Button onClickLoadMore={onClickLoadMore} />}
+      </AppUser>
+      {largeImageURL && (
+        <Modal
+          alt={alt}
+          largeImageURL={largeImageURL}
+          onImageClick={onImageClick}
+        />
+      )}
 
-        <GlobalStyle />
-      </>
-    );
-  }
-}
+      <GlobalStyle />
+    </>
+  );
+};
 
 export default App;
