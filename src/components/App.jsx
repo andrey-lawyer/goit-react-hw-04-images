@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { axiosSearchImages } from './axiosSearchImages';
 import Spinner from 'react-spinner-material';
-import { GlobalStyle } from 'utils/GlobalStyle';
+import { GlobalStyle } from 'styles/GlobalStyle';
 import { AppUser, SpinnerUser, Message } from './App.styled';
 import SearchBar from './Searchbar';
 import ImageGallery from './ImageGallery';
@@ -36,29 +36,15 @@ const App = () => {
     }
     setStatus(Status.PENDING);
     axiosSearchImages(searchName, page)
-      .then(promise => {
-        const oldData = promise.data.hits.map(
-          ({ id, largeImageURL, tags, webformatURL }) => ({
-            id,
-            largeImageURL,
-            tags,
-            webformatURL,
-          })
-        );
-        return {
-          data: oldData,
-          totalHits: promise.data.totalHits,
-        };
-      })
       .then(({ data, totalHits }) => {
         if (!data.length) {
           setError(
             'Sorry, there are no images matching your search query.Please try again.'
           );
-          setStatus(Status.RESOLVED);
+          setStatus(Status.REJECTED);
           return;
         }
-        setData(oldData => [...oldData, ...data]);
+        setData(newData => [...newData, ...data]);
         setTotalHits(totalHits);
         setStatus(Status.RESOLVED);
       })
@@ -94,7 +80,7 @@ const App = () => {
             <p>Search {searchName} ...</p>
           </SpinnerUser>
         )}
-        {(status === 'rejected' || error) && <Message>{error}</Message>}
+        {status === 'rejected' && <Message>{error}</Message>}
         {buttonShow && <Button onClickLoadMore={onClickLoadMore} />}
       </AppUser>
       {largeImageURL && (

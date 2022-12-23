@@ -8,8 +8,7 @@ import {
   SearchFormButtonLabel,
   SearchFormInput,
 } from './Searchbar.styled';
-// import { nanoid } from 'nanoid';
-// import { FormUser, LabelUser, InputUser, ButtonAdd } from './Form.styled';
+
 const SearchBar = ({ onSubmit }) => {
   const [searchName, setSearchName] = useState('');
 
