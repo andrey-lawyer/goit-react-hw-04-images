@@ -68,12 +68,13 @@ const App = () => {
     setLargeImageURL(largeImageURL);
     setAlt(alt);
   };
-
   return (
     <>
       <AppUser>
         <SearchBar onSubmit={handleFormSubmit} page={page} />
-        <ImageGallery dataInfo={data} onImageClick={onImageClick} />
+        {!!data.length && (
+          <ImageGallery dataInfo={data} onImageClick={onImageClick} />
+        )}
         {status === 'pending' && (
           <SpinnerUser>
             <Spinner radius={70} color={'#3f51b5e'} stroke={3} visible={true} />

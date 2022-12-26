@@ -3,9 +3,10 @@ import { Overlay, ModalWindow, ImageComp } from './Modal.styled';
 import PropTypes from 'prop-types';
 const Modal = ({ largeImageURL, alt, onImageClick }) => {
   useEffect(() => {
-    document.addEventListener('keydown', () => onImageClick(''));
+    const onClickModal = () => onImageClick('');
+    document.addEventListener('keydown', onClickModal);
     return () => {
-      document.removeEventListener('keydown', () => onImageClick(''));
+      document.removeEventListener('keydown', onClickModal);
     };
   }, [onImageClick]);
 
